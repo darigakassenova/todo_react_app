@@ -27,7 +27,7 @@ export default function App() {
     defaultValue: "light",
     getInitialValueInEffect: true,
   });
-  const [sortState, setSortState] = useState(null);
+
   const [filterState, setFilterState] = useState(null);
 
   const toggleColorScheme = (value) =>
@@ -78,10 +78,6 @@ export default function App() {
     setTasks([...tasks].sort((a, b) => (a.state === state ? -1 : 1)));
   }
 
-  function filterTasksByState(state) {
-    return tasks.filter((task) => task.state === state);
-  }
-
   function sortByDeadline() {
     setTasks([...tasks].sort((a, b) => new Date(a.deadline) - new Date(b.deadline)));
   }
@@ -101,6 +97,10 @@ export default function App() {
   useEffect(() => {
     loadTasks();
   }, []);
+
+  useEffect(() => {
+    saveTasks(tasks);
+  }, [tasks]);
 
   return (
     <ColorSchemeProvider
@@ -251,23 +251,39 @@ export default function App() {
               <Button onClick={() => sortTasksByState("Done")}>Show Done First</Button>
               <Button onClick={() => sortTasksByState("Doing right now")}>Show Doing First</Button>
               <Button onClick={() => sortTasksByState("Not done")}>Show Not done First</Button>
+              <Button onClick={() => setFilterState("Done")}>Only Done</Button>
+              <Button onClick={() => setFilterState("Not done")}> Only Not done </Button>
+              <Button onClick={() => setFilterState("Doing right now")}> Only Doing </Button>
+
               <Button onClick={() => sortByDeadline()}>Sort by Deadline</Button>
             </Group>
 
             {tasks.length > 0 ? (
-              tasks.map((task, index) => (
+              tasks
+              .filter((task) => (filterState ? task.state === filterState : true))
+              .map((task, index) => (
                 <Card withBorder key={index} mt={"sm"}>
                   <Group position={"apart"}>
                     <Text weight={"bold"}>{task.title}</Text>
-                    <ActionIcon
-                      onClick={() => {
-                        deleteTask(index);
-                      }}
-                      color={"red"}
-                      variant={"transparent"}
-                    >
-                      <Trash />
-                    </ActionIcon>
+                    <Group>
+                      <Button
+                        onClick={() => openEditModal(task, index)}
+                        variant={"subtle"}
+                        size={"xs"}
+                        color={"blue"}
+                      >
+                        Edit
+                      </Button>
+                      <ActionIcon
+                        onClick={() => {
+                          deleteTask(index);
+                        }}
+                        color={"red"}
+                        variant={"transparent"}
+                      >
+                        <Trash />
+                      </ActionIcon>
+                    </Group>
                   </Group>
                   <Text color={"dimmed"} size={"md"} mt={"sm"}>
                     {task.summary || "No summary was provided for this task"}
